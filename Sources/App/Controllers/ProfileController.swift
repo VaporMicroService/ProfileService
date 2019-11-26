@@ -17,7 +17,6 @@ struct ProfileController {
     }
     
     struct ParameterRequest: Content {
-        var id: Int
         var type: String
         var value: [String]
     }
@@ -64,10 +63,9 @@ struct ProfileController {
         return try req.content.decode(json: ParameterRequest.self, using: decoderJSON).flatMap { update -> EventLoopFuture<Preference> in
             return Profile.find(try req.parameters.next(), on: req).flatMap { profile -> EventLoopFuture<Preference> in
                 guard let profile = profile else { throw Abort(.notFound) }
-                return Preference.find(update.id, on: req).flatMap({ preference -> EventLoopFuture<Preference> in
+                return try profile.preference.query(on: req).filter(\.type == update.type).first().flatMap({ preference -> EventLoopFuture<Preference> in
                     guard let preference = preference else {
                         let newPreference = Preference(profileID: try profile.requireID(), type: update.type, value: update.value)
-                        newPreference.id = update.id
                         newPreference.update(request: update)
                         return newPreference.save(on: req)
                     }

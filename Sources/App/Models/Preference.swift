@@ -21,7 +21,8 @@ final class Preference: PostgreSQLModel {
     var type: String
     var value: [String]?
     
-    init(profileID: Profile.ID, type: String, value: [String]) {
+    init(id: Int? = nil, profileID: Profile.ID, type: String, value: [String]) {
+        self.id = id
         self.type = type
         self.value = value
         self.profileID = profileID
