@@ -13,7 +13,7 @@ import FluentPostgreSQL
 
 extension Profile {
     static func create(on connection: PostgreSQLConnection) throws -> Profile {
-        let profile = Profile()
+        let profile = Profile(ownerID: "1234")
         profile.gender = .male
         profile.name = "Test"
         profile.firstName = "Testing"
@@ -57,7 +57,9 @@ class ProfileControllerTests: XCTestCase {
     
     func testGetProfile() throws {
         let profile = try Profile.create(on: conn)
-        let response = try app.sendRequest(to: "\(uri)/\(profile.id!)", method: .GET)
+        var headers = HTTPHeaders()
+        headers.replaceOrAdd(name: .contentID, value: "1234")
+        let response = try app.sendRequest(to: "\(uri)/\(profile.id!)", method: .GET, headers: headers)
         XCTAssertEqual(response.http.status.code, 200)
         
         let fetch = try response.content.syncDecode(Profile.self)
@@ -74,18 +76,21 @@ class ProfileControllerTests: XCTestCase {
     }
 
     func testCreateProfile() throws {
-        var profile = ProfileController.ProfileRequest(id: 2)
+        var profile = ProfileController.ProfileRequest()
         profile.gender = .male
         profile.userName = "Test"
         profile.firstName = "Testing"
         profile.lastName = "Tester"
         profile.birthday = Date()
         profile.bio = "hdska csakjch fhewg vdsjlhvgds"
-        let response = try app.sendRequest(to: "\(uri)", method: .PUT, body: profile)
+        
+        var headers = HTTPHeaders()
+        headers.replaceOrAdd(name: .contentID, value: "1234")
+        let response = try app.sendRequest(to: "\(uri)", method: .PUT, headers: headers, body: profile)
         XCTAssertEqual(response.http.status.code, 200)
         
         let fetch = try response.content.syncDecode(Profile.self)
-        
+        XCTAssertEqual(fetch.ownerID, "1234")
         XCTAssertEqual(fetch.gender, profile.gender)
         XCTAssertEqual(fetch.name, profile.userName)
         XCTAssertEqual(fetch.firstName, profile.firstName)
@@ -100,18 +105,21 @@ class ProfileControllerTests: XCTestCase {
     func testUpdateProfile() throws {
         _ = try Profile.create(on: conn)
         
-        var profile = ProfileController.ProfileRequest(id: 3)
+        var profile = ProfileController.ProfileRequest()
         profile.gender = .male
         profile.userName = "Update"
         profile.firstName = "Updateing"
         profile.lastName = "Updateer"
         profile.birthday = Date()
         profile.bio = "fgdsjklavbzx,cmn sajgkdf weytufoq"
-        let response = try app.sendRequest(to: "\(uri)", method: .PUT, body: profile)
+        
+        var headers = HTTPHeaders()
+        headers.replaceOrAdd(name: .contentID, value: "1234")
+        let response = try app.sendRequest(to: "\(uri)", method: .PUT, headers: headers, body: profile)
         XCTAssertEqual(response.http.status.code, 200)
         
         let fetch = try response.content.syncDecode(Profile.self)
-        
+        XCTAssertEqual(fetch.ownerID, "1234")
         XCTAssertEqual(fetch.gender, profile.gender)
         XCTAssertEqual(fetch.name, profile.userName)
         XCTAssertEqual(fetch.firstName, profile.firstName)
@@ -125,7 +133,9 @@ class ProfileControllerTests: XCTestCase {
     
     func testDeleteProfile() throws {
         let profile = try Profile.create(on: conn)
-        let response = try app.sendRequest(to: "\(uri)/\(profile.id!)", method: .DELETE)
+        var headers = HTTPHeaders()
+        headers.replaceOrAdd(name: .contentID, value: "1234")
+        let response = try app.sendRequest(to: "\(uri)/\(profile.id!)", method: .DELETE, headers: headers)
         XCTAssertEqual(response.http.status.code, 200)
     }
     

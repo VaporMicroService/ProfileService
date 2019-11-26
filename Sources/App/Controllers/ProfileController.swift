@@ -6,7 +6,6 @@ import Vapor
 struct ProfileController {
     // MARK: Content
     struct ProfileRequest: Content {
-        var id: Int
         var coordinates: GeoPoint?
         var userName: String?
         var firstName: String?
@@ -78,18 +77,20 @@ struct ProfileController {
     
     //MARK: Profile
     func get(_ req: Request) throws -> Future<Profile> {
+        guard let ownerId = req.http.headers.firstValue(name: .contentID) else { throw Abort(.unauthorized) }
         return Profile.find(try req.parameters.next(), on: req).map { profile -> Profile in
             guard let profile = profile else { throw Abort(.notFound) }
+            guard profile.ownerID == ownerId else { throw Abort(.forbidden) }
             return profile
         }
     }
     
     func put(_ req: Request) throws -> Future<Profile> {
+        guard let ownerId = req.http.headers.firstValue(name: .contentID) else { throw Abort(.unauthorized) }
         return try req.content.decode(json: ProfileRequest.self, using: decoderJSON).flatMap { update -> Future<Profile> in
-            return Profile.find(update.id, on: req).flatMap({ profile -> EventLoopFuture<Profile> in
+            return Profile.query(on: req).filter(\.ownerID == ownerId).first().flatMap({ profile -> EventLoopFuture<Profile> in
                 guard let profile = profile else {
-                    let newProfile = Profile()
-                    newProfile.id = update.id
+                    let newProfile = Profile(ownerID: ownerId)
                     newProfile.update(request: update)
                     return newProfile.save(on: req)
                 }
@@ -100,8 +101,10 @@ struct ProfileController {
     }
     
     func delete(_ req: Request) throws -> Future<HTTPResponseStatus> {
+        guard let ownerId = req.http.headers.firstValue(name: .contentID) else { throw Abort(.unauthorized) }
         return Profile.find(try req.parameters.next(), on: req).flatMap { profile -> EventLoopFuture<HTTPResponseStatus> in
             guard let profile = profile else { throw Abort(.notFound) }
+            guard profile.ownerID == ownerId else { throw Abort(.forbidden) }
             return profile.delete(on: req).transform(to: .ok)
         }
     }

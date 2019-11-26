@@ -19,6 +19,7 @@ final class Profile: PostgreSQLModel {
     static var updatedAtKey: TimestampKey? { return \.updatedAt }
     
     var id: Int?
+    var ownerID: String
     var createdAt: Date?
     var updatedAt: Date?
     var name: String?
@@ -46,6 +47,11 @@ final class Profile: PostgreSQLModel {
         }
     }
     
+    init(id: Int? = nil, ownerID: String) {
+        self.id = id
+        self.ownerID = ownerID
+    }
+    
     func update(request: ProfileController.ProfileRequest) {
         if let gender = request.gender { self.gender = gender }
         if let userName = request.userName { self.name = userName }
@@ -70,6 +76,7 @@ extension Profile: Migration {
     static func prepare(on conn: PostgreSQLConnection) -> Future<Void> {
         return PostgreSQLDatabase.create(Profile.self, on: conn) { builder in
             builder.field(for: \.id, isIdentifier: true)
+            builder.field(for: \.ownerID)
             builder.field(for: \.createdAt)
             builder.field(for: \.updatedAt)
             builder.field(for: \.name)
@@ -81,6 +88,7 @@ extension Profile: Migration {
             builder.field(for: \.location)
             
             builder.unique(on: \.id)
+            builder.unique(on: \.ownerID)
         }
     }
 }
