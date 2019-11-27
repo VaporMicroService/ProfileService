@@ -23,7 +23,7 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
 
     let psqlConfig: PostgreSQLDatabaseConfig!
     if let url = Environment.get("PSQL_DATABASE_URL") {
-        psqlConfig = PostgreSQLDatabaseConfig(url: url, transport: .unverifiedTLS)
+        psqlConfig = PostgreSQLDatabaseConfig(url: url, transport: .cleartext)
     } else {
         psqlConfig = try PostgreSQLDatabaseConfig.default()
     }
@@ -38,6 +38,7 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     // Configure migrations
     var migrations = MigrationConfig()
     migrations.add(model: Profile.self, database: .psql)
+    migrations.add(model: Preference.self, database: .psql)
     services.register(migrations)
     
     var commandConfig = CommandConfig.default()
