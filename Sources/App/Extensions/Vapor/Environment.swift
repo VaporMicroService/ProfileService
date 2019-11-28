@@ -24,7 +24,6 @@ public extension Environment {
             let contents = try? String(contentsOfFile: path, encoding: .utf8) else {
                 return
         }
-        print("Load Environment: \(filename)")
         let lines = contents.split(whereSeparator: { $0 == "\n" || $0 == "\r\n" })
         
         for line in lines {

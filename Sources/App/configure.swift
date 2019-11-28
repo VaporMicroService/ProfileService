@@ -20,7 +20,6 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     // middlewares.use(FileMiddleware.self) // Serves files from `Public/` directory
     middlewares.use(ErrorMiddleware.self) // Catches errors and converts to HTTP response
     services.register(middlewares)
-
     let psqlConfig: PostgreSQLDatabaseConfig!
     if let url = Environment.get("PSQL_DATABASE_URL") {
         psqlConfig = PostgreSQLDatabaseConfig(url: url, transport: .cleartext)
@@ -34,16 +33,15 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     databases.enableLogging(on: .psql)
     databases.add(database: postgre, as: .psql)
     services.register(databases)
-
     // Configure migrations
     var migrations = MigrationConfig()
     migrations.add(model: Profile.self, database: .psql)
     migrations.add(model: Preference.self, database: .psql)
     services.register(migrations)
-    
+
     var commandConfig = CommandConfig.default()
     commandConfig.useFluentCommands()
     services.register(commandConfig)
-    
+
     config.prefer(MemoryKeyedCache.self, for: KeyedCache.self)
 }
